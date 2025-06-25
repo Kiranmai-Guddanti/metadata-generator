@@ -1,23 +1,23 @@
-# Automated Metadata Extraction
+# Automated Metadata Generator
 
 A modern, user-friendly web app for extracting rich metadata and semantic information from PDF, DOCX, TXT, and image files. Built with Streamlit and Python, this project is ideal for document analysis, academic work, and automated content understanding.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ### Main Interface
-![Main UI](screenshots/screenshot1.png)
+![Main UI](images/1.png)
 
 ### Metadata Display
-![Metadata Display](screenshots/screenshot2.png)
+![Metadata Display](images/2.png)
 
 ### Semantic Data Expander
-![Semantic Data](screenshots/screenshot3.png)
+![Semantic Data](images/3.png)
 
 ---
 
-## 🚀 Features
+## Features
 - **File Upload:** Supports PDF, DOCX, TXT, PNG, JPG, and JPEG files.
 - **Automated Metadata Extraction:**
   - Basic file info (name, type, size, processing date)
@@ -28,7 +28,7 @@ A modern, user-friendly web app for extracting rich metadata and semantic inform
 
 ---
 
-## 📂 Supported File Types
+## Supported File Types
 - PDF (.pdf)
 - Word Document (.docx)
 - Text File (.txt)
@@ -44,7 +44,7 @@ A modern, user-friendly web app for extracting rich metadata and semantic inform
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 ### 1. Clone the repository or copy the project files
 
@@ -79,7 +79,7 @@ python -m spacy download en_core_web_sm
 
 ---
 
-## ▶️ Running the App
+## Running the App
 ```bash
 streamlit run streamlit_app.py
 ```
@@ -87,7 +87,7 @@ streamlit run streamlit_app.py
 
 ---
 
-## 📝 Usage Instructions
+## Usage Instructions
 1. **Upload a file** using the uploader at the top.
 2. **View extracted metadata** in three sections:
    - Basic Info
@@ -97,7 +97,7 @@ streamlit run streamlit_app.py
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```
 ├── metadata_generator.py      # All extraction and analysis logic
 ├── streamlit_app.py           # Streamlit web app UI
@@ -109,14 +109,14 @@ streamlit run streamlit_app.py
 
 ---
 
-## 🛠️ Customization
+## Customization
 - **Add more metadata fields:** Edit `metadata_generator.py`.
 - **Change UI layout:** Edit `streamlit_app.py` (uses only Streamlit native components).
 - **Change background gradient:** Edit the CSS in `streamlit_app.py`.
 
 ---
 
-## ❓ Troubleshooting
+### Troubleshooting
 - **Tesseract/Poppler not found:**
   - Ensure they are installed and their paths are added to your system PATH.
 - **spaCy model error:**
@@ -130,7 +130,3 @@ streamlit run streamlit_app.py
 
 ## 📣 Credits
 - Built with [Streamlit](https://streamlit.io/), [spaCy](https://spacy.io/), [NLTK](https://www.nltk.org/), [PyMuPDF](https://pymupdf.readthedocs.io/), [Tesseract OCR](https://github.com/tesseract-ocr/tesseract), and more.
-
----
-
-Enjoy using Automated Metadata Extraction! If you have questions or suggestions, feel free to reach out. 
