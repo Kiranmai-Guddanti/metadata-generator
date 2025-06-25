@@ -21,7 +21,7 @@ A modern, user-friendly web app for extracting rich metadata and semantic inform
 - **File Upload:** Supports PDF, DOCX, TXT, PNG, JPG, and JPEG files.
 - **Automated Metadata Extraction:**
   - Basic file info (name, type, size, processing date)
-  - Content analysis (language, document type, word/character/line count, sentiment, category, content type)
+  - Content analysis (language, word/character/line/page count,Readibility Score, sentiment, category, content type)
   - Semantic data (summary, key topics, key phrases, named entities: PERSON, ORG, PLACES)
 - **Modern UI:** Clean, professional, and easy to use with a subtle gradient background.
 - **No HTML/CSS required:** All UI is built with Streamlit's native components.
