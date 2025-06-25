@@ -10,14 +10,13 @@ A modern, user-friendly web app for extracting rich metadata and semantic inform
 ![Main UI](images/1.png)
 
 ### Metadata Display
-<p align="center">
-  <img src="screenshots/2.png" alt="Metadata Display" />
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="images/2.png" alt="Metadata Display" width="500"/></td>
+    <td align="center"><img src="images/3.png" alt="Semantic Data" width="500"/></td>
+  </tr>
+</table>
 
-### Semantic Data Expander
-<p align="center">
-  <img src="screenshots/3.png" alt="Semantic Data" />
-</p>
 
 ---
 
