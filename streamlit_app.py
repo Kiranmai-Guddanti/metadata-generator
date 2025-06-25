@@ -30,8 +30,8 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.set_page_config(page_title="Automated Metadata Extraction", layout="centered")
-st.title("Automated Metadata Extraction")
+st.set_page_config(page_title="Automated Metadata Generator", layout="centered")
+st.title("Automated Metadata Generator")
 st.write("Upload a PDF, DOCX, TXT, or image file to extract structured metadata.")
 
 uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
