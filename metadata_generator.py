@@ -13,6 +13,7 @@ from pdf2image import convert_from_path
 import fitz  # PyMuPDF - better alternative to PyPDF2
 from langdetect import detect, LangDetectException
 from textblob import TextBlob
+import textstat
 try:
     import spacy
     nlp = spacy.load('en_core_web_sm')
@@ -202,27 +203,35 @@ def classify_content(text):
     try:
         if not text or not isinstance(text, str):
             return "Unknown"
+
+        import re
         text_lower = text.lower()
-        legal_keywords = ['contract', 'agreement', 'clause', 'terms', 'conditions', 'legal', 'whereas']
-        report_keywords = ['report', 'analysis', 'findings', 'conclusion', 'executive summary', 'methodology']
-        resume_keywords = ['resume', 'cv', 'curriculum vitae', 'experience', 'education', 'skills']
-        financial_keywords = ['invoice', 'receipt', 'payment', 'amount', 'total', 'tax', 'billing']
-        academic_keywords = ['abstract', 'introduction', 'methodology', 'results', 'discussion', 'references']
-        if any(word in text_lower for word in legal_keywords):
-            return "Legal Document"
-        elif any(word in text_lower for word in academic_keywords):
-            return "Academic Document"
-        elif any(word in text_lower for word in report_keywords):
-            return "Report"
-        elif any(word in text_lower for word in resume_keywords):
-            return "Resume/CV"
-        elif any(word in text_lower for word in financial_keywords):
-            return "Financial Document"
+        categories = {
+            "Legal Document": ['contract', 'agreement', 'clause', 'terms', 'conditions', 'legal', 'whereas'],
+            "Academic Document": ['abstract', 'introduction', 'methodology', 'results', 'discussion', 'references'],
+            "Report": ['report', 'analysis', 'findings', 'conclusion', 'executive summary', 'methodology'],
+            "Resume/CV": ['resume', 'cv', 'curriculum vitae', 'experience', 'skills'],
+            "Financial Document": ['invoice', 'receipt', 'payment', 'amount', 'total', 'tax', 'billing'],
+        }
+
+        scores = {
+            category: sum(1 for word in keywords if re.search(r'\b' + re.escape(word) + r'\b', text_lower))
+            for category, keywords in categories.items()
+        }
+
+        print("Scores:", scores)
+        print(text_lower)
+
+        best_match = max(scores, key=scores.get)
+        if scores[best_match] > 1:
+            return best_match
         else:
             return "General Document"
     except Exception as e:
         print(f"Content classification error: {e}")
         return "Unknown"
+
+
 
 def detect_language(text):
     try:
@@ -244,63 +253,93 @@ def analyze_sentiment(text):
         return 'Unknown'
 
 def extract_key_information(text):
-    """Extract entities, keywords, and important sections"""
+    """Extract unique entities (PERSON, ORG, PLACES) with improved filtering for academic documents."""
+    import string
     entities = {
         'PERSON': [],
         'ORG': [],
         'PLACES': []
     }
-    key_phrases = []
-    
+    # Custom ignore lists and stopwords for academic/section headers
+    ignore_words = set([
+        'Types', 'Meditation', 'Prayer', 'al', 'al.', 'the Jesus Prayer', 'Walk', 'Page', 'Text', 'the', 'and', 'or', 'of', 'in', 'on', 'for', 'with', 'to', 'by', 'at', 'from', 'as', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'it', 'this', 'that', 'these', 'those', 'a', 'an', 'but', 'if', 'because', 'while', 'where', 'when', 'which', 'who', 'whom', 'whose', 'how', 'what', 'why', 'can', 'may', 'might', 'should', 'would', 'could', 'will', 'shall', 'do', 'does', 'did', 'done', 'has', 'have', 'had', 'having', 'not', 'no', 'yes', 'etc', 'et', 'al', 'al.'
+    ])
+    min_len = 2
+    max_len = 5  # max words in an entity
+    def is_valid_entity(ent):
+        # Remove if entity is in ignore list, is all lowercase, or is a single common word
+        ent_clean = ent.strip(string.punctuation + ' ')
+        if not ent_clean:
+            return False
+        if ent_clean in ignore_words:
+            return False
+        if ent_clean.lower() in ignore_words:
+            return False
+        if ent_clean.islower() or ent_clean.isupper():
+            return False
+        if any(char.isdigit() for char in ent_clean):
+            return False
+        if len(ent_clean.split()) > max_len or len(ent_clean.split()) < min_len:
+            return False
+        if ent_clean.lower() in set([w.lower() for w in ignore_words]):
+            return False
+        return True
     try:
         if 'nlp' in globals() and nlp is not None:
             doc = nlp(text)
-            # Extract named entities
+            persons = set()
+            orgs = set()
+            places = set()
             for ent in doc.ents:
-                if ent.label_ == 'PERSON':
-                    entities['PERSON'].append(ent.text)
-                elif ent.label_ == 'ORG':
-                    entities['ORG'].append(ent.text)
-                elif ent.label_ == 'GPE':
-                    entities['PLACES'].append(ent.text)
-            # Extract key phrases using noun chunks
-            key_phrases = [chunk.text for chunk in doc.noun_chunks if len(chunk.text.split()) > 1]
+                ent_text = ent.text.strip()
+                if ent.label_ == 'PERSON' and is_valid_entity(ent_text):
+                    persons.add(ent_text)
+                elif ent.label_ == 'ORG' and is_valid_entity(ent_text):
+                    orgs.add(ent_text)
+                elif ent.label_ == 'GPE' and is_valid_entity(ent_text):
+                    places.add(ent_text)
+            entities['PERSON'] = sorted(persons)
+            entities['ORG'] = sorted(orgs)
+            entities['PLACES'] = sorted(places)
         else:
-            # Fallback: simple regex-based extraction
             import re
-            # Extract potential names (capitalized words)
-            names = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
-            entities['PERSON'] = list(set(names))[:10]
-            # Extract organizations (simple pattern: capitalized words followed by Inc, Ltd, etc.)
-            orgs = re.findall(r'\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+(Inc|Ltd|Corporation|Corp|LLC)\b', text)
-            entities['ORG'] = list(set(orgs))[:10]
-            # Extract places (simple pattern: common city/country names or capitalized words)
-            places = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b', text)
-            entities['PLACES'] = list(set(places))[:10]
-            # Simple key phrase extraction (common noun phrases)
-            words = text.split()
-            bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words)-1)]
-            key_phrases = list(set(bigrams))[:10]
+            names = set(n.strip() for n in re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b', text) if is_valid_entity(n))
+            orgs = set(o.strip() for o in re.findall(r'\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+(Inc|Ltd|Corporation|Corp|LLC)\b', text) if is_valid_entity(o))
+            places = set(p.strip() for p in re.findall(r'\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*)\b', text) if is_valid_entity(p))
+            entities['PERSON'] = sorted(names)
+            entities['ORG'] = sorted(orgs)
+            entities['PLACES'] = sorted(places)
     except Exception as e:
         print(f"Entity extraction failed: {e}")
-    return entities, key_phrases
+    return entities
 
 def improved_classify_content(text):
+    if not text or not isinstance(text, str):
+        return "Unknown"
+
     categories = {
-        'Finance': ['invoice', 'payment', 'tax', 'amount', 'total', 'billing', 'account', 'balance', 'statement', 'bank'],
+        'Finance': ['invoice', 'payment', 'tax','total', 'billing', 'account', 'balance', 'bank'],
         'Education': ['university', 'school', 'student', 'teacher', 'course', 'curriculum', 'exam', 'degree', 'academic'],
         'Legal': ['contract', 'agreement', 'clause', 'terms', 'conditions', 'legal', 'whereas', 'law', 'court'],
         'Medical': ['patient', 'doctor', 'medicine', 'treatment', 'diagnosis', 'hospital', 'clinical'],
         'Technology': ['software', 'hardware', 'computer', 'technology', 'system', 'application', 'device'],
-        'Report': ['report', 'analysis', 'findings', 'conclusion', 'summary', 'methodology'],
-        'Resume/CV': ['resume', 'cv', 'curriculum vitae', 'experience', 'education', 'skills'],
+        'Report': ['research', 'report', 'analysis', 'findings', 'conclusion', 'summary', 'methodology'],
+        'Resume/CV': ['resume', 'cv', 'curriculum vitae', 'experience', 'skills'],
         'Academic': ['abstract', 'introduction', 'methodology', 'results', 'discussion', 'references'],
     }
-    text_lower = text.lower() if text else ''
+
+    text_lower = text.lower()
+    scores = {}
+
     for category, keywords in categories.items():
-        if any(word in text_lower for word in keywords):
-            return category
-    return 'General'
+        scores[category] = sum(1 for word in keywords if word in text_lower)
+
+    best_match = max(scores, key=scores.get)
+    if scores[best_match] > 2:
+        return best_match
+    else:
+        return 'General'
+
 
 def generate_metadata(file_path, original_filename=None):
     if not os.path.exists(file_path):
@@ -308,9 +347,16 @@ def generate_metadata(file_path, original_filename=None):
     ext = os.path.splitext(file_path)[1].lower()
     text = ""
     extraction_log = []
+    page_count = None
     if ext == '.pdf':
         text, log = extract_text_from_pdf(file_path)
         extraction_log.extend(log)
+        try:
+            doc = fitz.open(file_path)
+            page_count = len(doc)
+            doc.close()
+        except Exception:
+            page_count = None
     elif ext == '.docx':
         text, log = extract_text_from_docx(file_path)
         extraction_log.extend(log)
@@ -337,6 +383,14 @@ def generate_metadata(file_path, original_filename=None):
         extraction_log.append(f"Unsupported file type: {ext}")
     try:
         file_stats = os.stat(file_path)
+        readability_score = None
+        if text and isinstance(text, str) and len(text.split()) > 0:
+            try:
+                readability_score = textstat.flesch_reading_ease(text)
+                if readability_score is not None:
+                    readability_score = round(readability_score, 2)
+            except Exception:
+                readability_score = None
         basic_info = {
             "filename": original_filename or os.path.basename(file_path),
             "file_type": ext[1:].upper() if ext else 'Unknown',
@@ -345,20 +399,19 @@ def generate_metadata(file_path, original_filename=None):
         }
         content_analysis = {
             "language": detect_language(text) if text else 'Unknown',
-            "document_type": improved_classify_content(text) if text else 'Unknown',
             "word_count": len(text.split()) if text and isinstance(text, str) else 0,
             "character_count": len(text) if text and isinstance(text, str) else 0,
             "line_count": text.count('\n') + 1 if text and isinstance(text, str) else 0,
-            "readability_score": None,
+            "page_count": page_count,
+            "readability_score": readability_score,
             "sentiment": analyze_sentiment(text) if text else 'Unknown',
             "category": improved_classify_content(text) if text else 'Unknown',
             "content type": classify_content(text) if text else "Unknown",
         }
-        entities, key_phrases = extract_key_information(text) if text else ({}, [])
+        entities = extract_key_information(text) if text else {}
         semantic_data = {
             "summary": extract_summary(text) if text else "No text extracted",
             "key_topics": extract_keywords(text) if text else [],
-            "key_phrases": key_phrases,
             "entities": entities,
             "entraction log": extraction_log,
             "text preview": text[:500] + "..." if text and len(text) > 500 else text or "No text extracted"
