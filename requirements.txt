@@ -1,0 +1,11 @@
+streamlit
+PyPDF2
+docx
+pytesseract
+Pillow
+nltk
+pdf2image
+PyMuPDF
+langdetect
+textblob
+spacy 
