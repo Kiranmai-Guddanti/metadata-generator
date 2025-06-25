@@ -219,8 +219,6 @@ def classify_content(text):
             for category, keywords in categories.items()
         }
 
-        print("Scores:", scores)
-        print(text_lower)
 
         best_match = max(scores, key=scores.get)
         if scores[best_match] > 1:
