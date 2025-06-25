@@ -36,6 +36,9 @@ st.write("Upload a PDF, DOCX, TXT, or image file to extract structured metadata.
 
 uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
 
+# Add extra space after the uploader
+st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
+
 if uploaded_file:
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
         tmp_file.write(uploaded_file.read())
@@ -52,8 +55,6 @@ if uploaded_file:
             st.info(metadata['semantic_data']['summary'])
             st.markdown("**Key Topics:**")
             st.code(", ".join(metadata['semantic_data']['key_topics']))
-            st.markdown("**Key Phrases:**")
-            st.code(", ".join(metadata['semantic_data']['key_phrases']))
             st.markdown("**Entities:**")
             st.json(metadata['semantic_data']['entities'])
             st.markdown("**Extraction Log:**")
